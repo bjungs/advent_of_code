@@ -1,4 +1,4 @@
-# Advent of Code solution
+# Advent of Code solutions
 My personal solutions to the Advent of Code challenges.
 
 It is not my goal to try to solve each problem in the most efficient way.

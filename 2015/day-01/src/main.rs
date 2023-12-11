@@ -1,4 +1,4 @@
-use std::ops::Add;
+use std::ops::{Add, AddAssign};
 
 // --- Day 1: Not Quite Lisp ---
 // Santa was hoping for a white Christmas, but his weather machine's "snow" function is powered by stars, and he's fresh out! To save Christmas, he needs you to collect fifty stars by December 25th.
@@ -53,6 +53,12 @@ impl Add<&Step> for i32 {
     }
 }
 
+impl AddAssign<&Step> for i32 {
+    fn add_assign(&mut self, rhs: &Step) {
+        *self += i32::from(rhs)
+    }
+}
+
 struct Input {
     steps: Vec<Step>
 }
@@ -77,15 +83,13 @@ fn main() {
 }
 
 fn final_floor(input: &Input) -> i32 {
-    input.steps.iter().fold(0, |acc, step| {
-        acc + step
-    })
+    input.steps.iter().fold(0, |acc, step| acc + step)
 }
 
 fn first_time_basement(input: &Input) -> usize {
     let mut floor = 0;
     for (idx, step) in input.steps.iter().enumerate() {
-        floor = floor + step;
+        floor += step;
         if floor < 0 {
             return idx + 1;
         }

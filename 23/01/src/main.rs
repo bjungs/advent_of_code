@@ -21,30 +21,44 @@
 //
 // Consider your entire calibration document. What is the sum of all of the calibration values?
 
+// --- Part Two ---
+// Your calculation isn't quite right. It looks like some of the digits are actually spelled out with letters: one, two, three, four, five, six, seven, eight, and nine also count as valid "digits".
+//
+// Equipped with this new information, you now need to find the real first and last digit on each line. For example:
+//
+// two1nine
+// eightwothree
+// abcone2threexyz
+// xtwone3four
+// 4nineeightseven2
+// zoneight234
+// 7pqrstsixteen
+// In this example, the calibration values are 29, 83, 13, 24, 42, 14, and 76. Adding these together produces 281.
+//
+// What is the sum of all of the calibration values?
+
 use std::iter::{Iterator};
 
 fn main() {
-    let calibration_document = include_str!("../input/input.txt");
+    let cal_doc = include_str!("../input/calibration_document.txt");
     println!("Day 1");
-    println!("Part 1: {}", calibration_values_part1(calibration_document));
-    println!("Part 2: {}", calibration_values_part2(calibration_document));
+    println!("Part 1: {}", cal_values_part1(cal_doc));
+    println!("Part 2: {}", cal_values_part2(cal_doc));
 }
 
-fn calibration_values_part1(calibration_document: &str) -> u32 {
-    calibration_document.lines().map(|line| {
-        let (mut first, mut last) = (0, 0);
-        for char in line.chars() {
-            if let Some(digit) = char.to_digit(10) {
-                match first {
-                    0 => {
-                        first = digit;
-                        last = digit;
-                    },
-                    _ => last = digit
-                }
+fn cal_values_part1(cal_doc: &str) -> u32 {
+    cal_doc.lines().map(|line| {
+        line.chars().fold(
+            (0, 0),
+            |cal_values, char| {
+                char.to_digit(10).map_or(cal_values, |digit| {
+                    match cal_values.0 {
+                        0 => (digit, digit),
+                        _ => (cal_values.0, digit)
+                    }
+                })
             }
-        }
-        first * 10 + last
+        )
     }).sum()
 }
 
@@ -59,31 +73,31 @@ fn digit_at_word_end(word: &str) -> Option<u32> {
     None
 }
 
-fn calibration_values_part2(calibration_document: &str) -> u32 {
-    // word buffer to keep track of potential SPELLED_DIGITS
+fn cal_values_part2(cal_doc: &str) -> u32 {
+    // a word buffer to keep track of potential SPELLED_DIGITS
     let mut buffer: String = String::new();
 
-    calibration_document.lines().map(|line| {
-        // accumulate lines into (first digit, last digit) tuples
-        let (first, last) = line.chars().fold((0, 0), |acc, char| {
-            // try to parse character into a digit
+    cal_doc.lines().map(|line| {
+        // fold the lines into cal values
+        let (first, last) = line.chars().fold((0, 0), |cal_vals, char| {
+            // try to parse each character into a digit
             let parsed_digit = char
                 .to_digit(10)
+                // if the character is not a digit...
                 .or_else(|| {
-                    // character is not a digit
-                    //  push it to the word buffer and check if it forms a SPELLED_DIGIT
+                    // push it to the word buffer and check if it forms a SPELLED_DIGIT instead
                     buffer.push(char);
                     digit_at_word_end(buffer.as_str())
                 });
 
             parsed_digit.map_or(
-                // no digit found, keep tuple as-is
-                acc,
+                // if still no digit, keep the tuple as-is
+                cal_vals,
                 // digit found, update the tuple accordingly
                 |digit| {
-                match acc.0 {
+                match cal_vals.0 {
                     0 => (digit, digit), // first digit encountered, set both digits
-                    _ => (acc.0, digit), // from the second on, only update the last digit
+                    _ => (cal_vals.0, digit), // from the second digit on, only update the last one
                 }
             })
         });
@@ -91,7 +105,7 @@ fn calibration_values_part2(calibration_document: &str) -> u32 {
         // clear buffer for next line iteration
         buffer.clear();
 
-        // format the result as expected ({first}{last})
+        // format the result
         (first * 10) + last
-    }).sum()
+    }).sum() // we want the SUM of the cal_vals
 }

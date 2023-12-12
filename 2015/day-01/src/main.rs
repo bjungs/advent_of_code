@@ -76,7 +76,7 @@ fn process_input(str_input: &str) -> Input {
 }
 
 fn main() {
-    let input = process_input(include_str!("input"));
+    let input = process_input(include_str!("../input/input.txt"));
     println!("Day 1");
     println!("\tPart 1: {}", final_floor(&input));
     println!("\tPart 2: {}", first_time_basement(&input));

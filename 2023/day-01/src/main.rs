@@ -21,17 +21,16 @@
 //
 // Consider your entire calibration document. What is the sum of all of the calibration values?
 
-use std::str::Lines;
-use std::iter::Map;
+use std::iter::{Iterator};
 
 fn main() {
     let calibration_document = include_str!("../input/input.txt");
-    let calibration_values = calibration_values(calibration_document);
     println!("Day 1");
-    println!("Part 1: {}", calibration_values.sum::<u32>());
+    println!("Part 1: {}", calibration_values_part1(calibration_document));
+    println!("Part 2: {}", calibration_values_part2(calibration_document));
 }
 
-fn calibration_values(calibration_document: &str) -> Map<Lines, fn(&str) -> u32> {
+fn calibration_values_part1(calibration_document: &str) -> u32 {
     calibration_document.lines().map(|line| {
         let (mut first, mut last) = (0, 0);
         for char in line.chars() {
@@ -46,5 +45,53 @@ fn calibration_values(calibration_document: &str) -> Map<Lines, fn(&str) -> u32>
             }
         }
         first * 10 + last
-    })
+    }).sum()
+}
+
+const SPELLED_DIGITS: [&str; 9] = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+
+fn digit_at_word_end(word: &str) -> Option<u32> {
+    for (index, &spelled_digit) in SPELLED_DIGITS.iter().enumerate() {
+        if word.ends_with(spelled_digit) {
+            return Some((index + 1) as u32)
+        }
+    }
+    None
+}
+
+fn calibration_values_part2(calibration_document: &str) -> u32 {
+    // word buffer to keep track of potential SPELLED_DIGITS
+    let mut buffer: String = String::new();
+
+    calibration_document.lines().map(|line| {
+        // accumulate lines into (first digit, last digit) tuples
+        let (first, last) = line.chars().fold((0, 0), |acc, char| {
+            // try to parse character into a digit
+            let parsed_digit = char
+                .to_digit(10)
+                .or_else(|| {
+                    // character is not a digit
+                    //  push it to the word buffer and check if it forms a SPELLED_DIGIT
+                    buffer.push(char);
+                    digit_at_word_end(buffer.as_str())
+                });
+
+            parsed_digit.map_or(
+                // no digit found, keep tuple as-is
+                acc,
+                // digit found, update the tuple accordingly
+                |digit| {
+                match acc.0 {
+                    0 => (digit, digit), // first digit encountered, set both digits
+                    _ => (acc.0, digit), // from the second on, only update the last digit
+                }
+            })
+        });
+
+        // clear buffer for next line iteration
+        buffer.clear();
+
+        // format the result as expected ({first}{last})
+        (first * 10) + last
+    }).sum()
 }

@@ -96,7 +96,7 @@ fn cal_values_part2(cal_doc: &str) -> u32 {
                             (curr_first, curr_last),
                             // if a digit was found, update the tuple accordingly
                             |found_digit| {
-                                match cal_vals.0 {
+                                match curr_first {
                                     0 => (found_digit, found_digit), // first digit found => set both digits
                                     _ => (curr_first, found_digit), // from the second digit on, only update the last one
                                 }

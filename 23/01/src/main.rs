@@ -75,20 +75,16 @@ fn digit_at_word_end(word: &str) -> Option<u32> {
 }
 
 fn cal_values_part2(cal_doc: &str) -> u32 {
-    // a word buffer to keep track of potential SPELLED_DIGITS
-    let mut buffer: String = String::new();
-
     cal_doc.lines().map(|line| {
         // fold the lines into cal values
-        let (first, last) = line.chars().fold((0, 0), |cal_vals, char| {
+        let (first, last) = line.chars().enumerate().fold((0, 0), |cal_vals, (index, char)| {
             // try to parse each character into a digit
             let parsed_digit = char
                 .to_digit(10)
                 // if the character is not a digit...
                 .or_else(|| {
                     // push it to the word buffer and check if it forms a SPELLED_DIGIT instead
-                    buffer.push(char);
-                    digit_at_word_end(buffer.as_str())
+                    digit_at_word_end(&line[..=index])
                 });
 
             parsed_digit.map_or(
@@ -102,9 +98,6 @@ fn cal_values_part2(cal_doc: &str) -> u32 {
                 }
             })
         });
-
-        // clear buffer for next line iteration
-        buffer.clear();
 
         // format the result
         (first * 10) + last

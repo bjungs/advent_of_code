@@ -77,24 +77,22 @@ fn digit_at_word_end(word: &str) -> Option<u32> {
 fn cal_values_part2(cal_doc: &str) -> u32 {
     cal_doc.lines().map(|line| {
         // fold the lines into cal values
-        let (first, last) = line.chars().enumerate().fold((0, 0), |cal_vals, (index, char)| {
+        let (first, last) = line.chars().enumerate().fold((0, 0), |(curr_first, curr_last), (index, char)| {
             // try to parse each character into a digit
             let parsed_digit = char
                 .to_digit(10)
                 // if the character is not a digit...
-                .or_else(|| {
-                    // push it to the word buffer and check if it forms a SPELLED_DIGIT instead
-                    digit_at_word_end(&line[..=index])
-                });
+                // check if the &str forms a SPELLED_DIGIT
+                .or_else(|| digit_at_word_end(&line[..=index]));
 
             parsed_digit.map_or(
                 // if still no digit, keep the tuple as-is
-                cal_vals,
-                // digit found, update the tuple accordingly
-                |digit| {
+                (curr_first, curr_last),
+                // if a digit was found, update the tuple accordingly
+                |found_digit| {
                 match cal_vals.0 {
-                    0 => (digit, digit), // first digit encountered, set both digits
-                    _ => (cal_vals.0, digit), // from the second digit on, only update the last one
+                    0 => (found_digit, found_digit), // first digit found => set both digits
+                    _ => (curr_first, found_digit), // from the second digit on, only update the last one
                 }
             })
         });

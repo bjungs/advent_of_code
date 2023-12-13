@@ -60,17 +60,18 @@ impl AddAssign<&Step> for i32 {
 }
 
 struct Input {
-    steps: Vec<Step>
+    steps: Vec<Step>,
 }
 
 fn process_input(str_input: &str) -> Input {
-    let steps = str_input.chars().filter_map(|c| {
-        match c {
+    let steps = str_input
+        .chars()
+        .filter_map(|c| match c {
             '(' => Some(Step::Up),
             ')' => Some(Step::Down),
             _ => None,
-        }
-    }).collect();
+        })
+        .collect();
 
     Input { steps }
 }

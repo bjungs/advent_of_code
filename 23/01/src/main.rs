@@ -66,7 +66,7 @@ const SPELLED_DIGITS: [&str; 9] = [
     "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
 ];
 
-fn digit_at_word_end(word: &str) -> Option<u32> {
+fn spelled_digit_at_word_end(word: &str) -> Option<u32> {
     for (index, &spelled_digit) in SPELLED_DIGITS.iter().enumerate() {
         if word.ends_with(spelled_digit) {
             return Some((index + 1) as u32);
@@ -76,36 +76,35 @@ fn digit_at_word_end(word: &str) -> Option<u32> {
 }
 
 fn cal_values_part2(cal_doc: &str) -> u32 {
-    cal_doc
-        .lines()
-        .map(|line| {
-            // fold the lines into cal values
-            let (first, last) =
-                line.chars()
-                    .enumerate()
-                    .fold((0, 0), |(curr_first, curr_last), (index, char)| {
-                        // try to parse each character into a digit
-                        let parsed_digit = char
-                            .to_digit(10)
-                            // if the character is not a digit...
-                            // check if the &str forms a SPELLED_DIGIT
-                            .or_else(|| digit_at_word_end(&line[..=index]));
+    cal_doc.lines().map(extract_cal_value).sum()
+}
 
-                        parsed_digit.map_or(
-                            // if still no digit, keep the tuple as-is
-                            (curr_first, curr_last),
-                            // if a digit was found, update the tuple accordingly
-                            |found_digit| {
-                                match curr_first {
-                                    0 => (found_digit, found_digit), // first digit found => set both digits
-                                    _ => (curr_first, found_digit), // from the second digit on, only update the last one
-                                }
-                            },
-                        )
-                    });
+fn extract_cal_value(line: &str) -> u32 {
+    // fold the lines into cal values
+    let (first, last) =
+        line.chars()
+            .enumerate()
+            .fold((0, 0), |(curr_first, curr_last), (index, char)| {
+                // try to parse each character into a digit
+                let parsed_digit = char
+                    .to_digit(10)
+                    // if the character is not a digit...
+                    // check if the &str forms a SPELLED_DIGIT
+                    .or_else(|| spelled_digit_at_word_end(&line[..=index]));
 
-            // format the result
-            (first * 10) + last
-        })
-        .sum() // we want the SUM of the cal_vals
+                parsed_digit.map_or(
+                    // if still no digit, keep the tuple as-is
+                    (curr_first, curr_last),
+                    // if a digit was found, update the tuple accordingly
+                    |found_digit| {
+                        match curr_first {
+                            0 => (found_digit, found_digit), // first digit found => set both digits
+                            _ => (curr_first, found_digit), // from the second digit on, only update the last one
+                        }
+                    },
+                )
+            });
+
+    // format the result
+    (first * 10) + last
 }

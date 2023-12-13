@@ -48,7 +48,7 @@ fn main() {
 
 fn cal_values_part1(cal_doc: &str) -> u32 {
     cal_doc.lines().map(|line| {
-        line.chars().fold(
+        let (first, last) = line.chars().fold(
             (0, 0),
             |cal_values, char| {
                 char.to_digit(10).map_or(cal_values, |digit| {
@@ -58,7 +58,8 @@ fn cal_values_part1(cal_doc: &str) -> u32 {
                     }
                 })
             }
-        )
+        );
+        (first * 10) + last
     }).sum()
 }
 

@@ -13,7 +13,7 @@ struct Round(Vec<CubeSet>);
 #[derive(Debug)]
 pub struct CubeSet(Color, u32);
 
-#[derive(Debug, Hash, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Hash, Eq, PartialEq)]
 pub enum Color {
     Red,
     Green,

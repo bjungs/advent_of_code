@@ -1,4 +1,4 @@
-use crate::game::{Color, CubeSet, Game, Round};
+use crate::game::{Color, CubeDraw, Game, Round};
 use std::convert::TryFrom;
 
 impl TryFrom<&str> for Game {
@@ -29,13 +29,13 @@ impl TryFrom<&str> for Round {
 
     fn try_from(str: &str) -> Result<Self, Self::Error> {
         str.split(", ")
-            .map(CubeSet::try_from)
+            .map(CubeDraw::try_from)
             .collect::<Result<_, _>>()
             .map(Round)
     }
 }
 
-impl TryFrom<&str> for CubeSet {
+impl TryFrom<&str> for CubeDraw {
     type Error = String;
 
     fn try_from(str: &str) -> Result<Self, Self::Error> {
@@ -47,7 +47,7 @@ impl TryFrom<&str> for CubeSet {
 
                 let color = Color::try_from(right)?;
 
-                Ok(CubeSet(color, amount))
+                Ok(CubeDraw(color, amount))
             }
             None => Err(format!(
                 "Invalid CubeSet \"{str}\". Expected pattern is: \"{}\"",

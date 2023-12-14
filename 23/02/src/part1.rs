@@ -1,4 +1,4 @@
-use day02::game::validation::CubeMap;
+use day02::game::validation::CubeSet;
 use day02::game::{Color, Game};
 
 pub fn solve() -> u32 {
@@ -9,7 +9,7 @@ pub fn solve() -> u32 {
         .map(Game::try_from)
         .map(Result::unwrap)
         .filter(|game| {
-            game.is_possible(&CubeMap::from([
+            game.is_possible(&CubeSet::from([
                 (Color::Red, 12),
                 (Color::Green, 13),
                 (Color::Blue, 14),

@@ -8,10 +8,10 @@ pub struct Game {
 }
 
 #[derive(Debug)]
-struct Round(Vec<CubeSet>);
+struct Round(Vec<CubeDraw>);
 
 #[derive(Debug)]
-pub struct CubeSet(Color, u32);
+pub struct CubeDraw(Color, u32);
 
 #[derive(Clone, Copy, Debug, Hash, Eq, PartialEq)]
 pub enum Color {

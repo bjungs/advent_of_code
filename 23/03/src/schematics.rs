@@ -50,11 +50,12 @@ impl From<&str> for Schematic {
 
                 if let Some(number) = maybe_number {
                     // check mid line for neighbouring symbols
-                    for neighbour_line_index in [
+                    let neighbours = [
                         max(num_start_pos, 1) - 1,
                         min(num_end_pos + 1, mid_line_chars.len() - 1),
-                    ] {
-                        if is_symbol(mid_line_chars[neighbour_line_index]) {
+                    ];
+                    for neighbour_index in neighbours {
+                        if is_symbol(mid_line_chars[neighbour_index]) {
                             // the number does indeed represent a Part
                             parts.push(Part(number));
                             break;
@@ -64,11 +65,9 @@ impl From<&str> for Schematic {
                     // check adjacent lines for neighbouring symbols
                     for maybe_line in [maybe_top_line, maybe_bot_line] {
                         if let Some(line) = maybe_line {
-                            let indexes = Vec::from_iter(
-                                max(num_start_pos, 1) - 1
-                                    ..=min(num_end_pos + 1, mid_line_chars.len() - 1),
-                            );
-                            if has_neighbouring_symbol(line, indexes) {
+                            let neighbours = &line[max(num_start_pos, 1) - 1
+                                ..=min(num_end_pos + 1, mid_line_chars.len() - 1)];
+                            if neighbours.chars().any(is_symbol) {
                                 parts.push(Part(number));
                                 break;
                             }
@@ -85,15 +84,6 @@ impl From<&str> for Schematic {
 
         Schematic { parts }
     }
-}
-
-fn has_neighbouring_symbol(line: &str, indexes: Vec<usize>) -> bool {
-    let chars: Vec<_> = line.chars().collect();
-    has_symbol(chars, indexes)
-}
-
-fn has_symbol(chars: Vec<char>, indexes: Vec<usize>) -> bool {
-    indexes.iter().any(|i| is_symbol(chars[*i]))
 }
 
 fn is_symbol(c: char) -> bool {

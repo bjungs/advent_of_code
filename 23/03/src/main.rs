@@ -2,7 +2,7 @@ extern crate core;
 
 mod schematics;
 
-use crate::schematics::{Part, Schematic};
+use crate::schematics::{Gear, Part, Schematic};
 
 // --- Day 3: Gear Ratios ---
 // You and the Elf eventually reach a gondola lift station; he says the gondola lift will take you up to the water source, but this is as far as he can bring you. You go inside.
@@ -65,7 +65,13 @@ fn main() {
     let schematic = Schematic::from(input);
 
     let sum_of_parts = schematic.parts.iter().map(|Part(num)| num).sum::<u32>();
+    let sum_of_gear_ratios = schematic
+        .gears
+        .iter()
+        .map(|Gear(p1, p2)| p1.0 * p2.0)
+        .sum::<u32>();
 
     println!("Day 3");
     println!("Part 1: {}", sum_of_parts);
+    println!("Part 2: {}", sum_of_gear_ratios);
 }

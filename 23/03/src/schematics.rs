@@ -1,29 +1,55 @@
 use std::cmp::{max, min};
+use std::collections::HashMap;
 
 pub struct Schematic {
     pub parts: Vec<Part>,
+    pub gears: Vec<Gear>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Part(pub u32);
 
-impl From<&str> for Schematic{
+#[derive(Debug)]
+pub struct Gear(pub Part, pub Part);
+
+#[derive(Debug)]
+enum Star {
+    SingleNeighbour(Part),
+    Gear(Gear),
+    TooManyNeighbours,
+}
+
+impl Star {
+    fn add_neighbour(&mut self, part: Part) {
+        let new_star = match self {
+            Star::SingleNeighbour(p1) => Star::Gear(Gear(*p1, part)),
+            Star::Gear(_) => Star::TooManyNeighbours,
+            Star::TooManyNeighbours => Star::TooManyNeighbours,
+        };
+
+        *self = new_star;
+    }
+}
+
+impl From<&str> for Schematic {
     fn from(str: &str) -> Self {
-        let mut lines = str.lines();
-        let (mut maybe_top_line, mut maybe_mid_line, mut maybe_bot_line): (Option<&str>, _, _) =
+        let mut lines = str.lines().enumerate();
+        let (mut maybe_top_line, mut maybe_mid_line, mut maybe_bot_line) =
             (None, lines.next(), lines.next());
 
-        let mut parts = Vec::new();
+        let mut parts: Vec<Part> = Vec::new();
+        let mut stars: HashMap<(usize, usize), Star> = HashMap::new();
 
-        while let Some(mid_line) = maybe_mid_line {
+        while let Some((mid_line_index, mid_line)) = maybe_mid_line {
             // find numbers
             let mid_line_chars: Vec<_> = mid_line.chars().collect();
             let mut index = 0;
             while index < mid_line_chars.len() {
-                if let Some(mut number) = mid_line_chars[index].to_digit(10) {
+                let curr_char = mid_line_chars[index];
+                if let Some(digit) = curr_char.to_digit(10) {
+                    let mut number = digit;
                     let mut next_index = index + 1;
-                    let num_start_pos = index;
-                    let num_end_pos;
+
                     while next_index < mid_line_chars.len() {
                         // get next char
                         if let Some(next_digit) = mid_line_chars[next_index].to_digit(10) {
@@ -34,35 +60,55 @@ impl From<&str> for Schematic{
                             break;
                         }
                     }
-                    index = next_index;
-                    num_end_pos = next_index - 1;
+
+                    let num_start_pos = index;
+                    let num_end_pos = next_index - 1;
 
                     // check mid line for neighbouring symbols
-                    let neighbours = [
-                        max(num_start_pos, 1) - 1,
+                    let mid_line_neighbours = [
+                        num_start_pos.saturating_sub(1),
                         min(num_end_pos + 1, mid_line_chars.len() - 1),
                     ];
-                    for neighbour_index in neighbours {
-                        if is_symbol(mid_line_chars[neighbour_index]) {
-                            // the number does indeed represent a Part
-                            parts.push(Part(number));
-                            break;
+                    for neighbour_index in mid_line_neighbours {
+                        let char = mid_line_chars[neighbour_index];
+                        if is_symbol(&char) {
+                            // the number is a Part Number
+                            let part = Part(number);
+                            parts.push(part);
+                            if char == '*' {
+                                stars
+                                    .entry((mid_line_index, neighbour_index))
+                                    .and_modify(|star| star.add_neighbour(part))
+                                    .or_insert(Star::SingleNeighbour(part));
+                            }
                         }
                     }
 
                     // check adjacent lines for neighbouring symbols
                     for maybe_line in [maybe_top_line, maybe_bot_line] {
-                        if let Some(line) = maybe_line {
-                            let neighbours = &line[max(num_start_pos, 1) - 1
-                                ..=min(num_end_pos + 1, mid_line_chars.len() - 1)];
-                            if neighbours.chars().any(is_symbol) {
-                                parts.push(Part(number));
-                                break;
+                        if let Some((line_index, line)) = maybe_line {
+                            let chars: Vec<_> = line.chars().collect();
+                            let neighbours = max(num_start_pos, 1) - 1
+                                ..=min(num_end_pos + 1, mid_line_chars.len() - 1);
+
+                            for neighbour_index in neighbours {
+                                let char = chars[neighbour_index];
+                                if is_symbol(&char) {
+                                    // the number is a Part Number
+                                    let part = Part(number);
+                                    parts.push(part);
+                                    if char == '*' {
+                                        stars
+                                            .entry((line_index, neighbour_index))
+                                            .and_modify(|star| star.add_neighbour(part))
+                                            .or_insert(Star::SingleNeighbour(part));
+                                    }
+                                }
                             }
                         }
                     }
+                    index = next_index;
                 } else {
-                    // check if it is a gear, and check its neighbours
                     index += 1;
                 }
             }
@@ -73,11 +119,20 @@ impl From<&str> for Schematic{
             maybe_bot_line = lines.next();
         }
 
-        Schematic { parts }
+        Schematic {
+            parts,
+            gears: stars
+                .into_values()
+                .filter_map(|s| match s {
+                    Star::Gear(gear) => Some(gear),
+                    _ => None,
+                })
+                .collect(),
+        }
     }
 }
 
-fn is_symbol(c: char) -> bool {
+fn is_symbol(c: &char) -> bool {
     match c {
         '.' => false,
         char if char.to_digit(10).is_some() => false,

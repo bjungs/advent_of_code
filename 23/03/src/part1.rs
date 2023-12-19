@@ -25,7 +25,6 @@ pub fn solve_old() -> u32 {
                 // character is a digit, peek next character(s) so we can find the number
                 let mut next_index: usize = index + 1;
                 while let Some(Some(next_digit)) = mid_chars.get(next_index).map(|(_, next_char)| next_char.to_digit(10)) {
-                    dbg!(number);
                     number = number * 10 + next_digit;
                     next_index += 1;
                 };

@@ -14,20 +14,18 @@ pub struct Gear(pub Part, pub Part);
 
 #[derive(Debug)]
 enum Star {
-    SingleNeighbour(Part),
-    Gear(Gear),
+    OneNeighbour(Part),
+    TwoNeighbours(Part, Part),
     TooManyNeighbours,
 }
 
 impl Star {
     fn add_neighbour(&mut self, part: Part) {
-        let new_star = match self {
-            Star::SingleNeighbour(p1) => Star::Gear(Gear(*p1, part)),
-            Star::Gear(_) => Star::TooManyNeighbours,
+        *self = match *self {
+            Star::OneNeighbour(p1) => Star::TwoNeighbours(p1, part),
+            Star::TwoNeighbours(_, _) => Star::TooManyNeighbours,
             Star::TooManyNeighbours => Star::TooManyNeighbours,
         };
-
-        *self = new_star;
     }
 }
 
@@ -79,7 +77,7 @@ impl From<&str> for Schematic {
                                 stars
                                     .entry((mid_line_index, neighbour_index))
                                     .and_modify(|star| star.add_neighbour(part))
-                                    .or_insert(Star::SingleNeighbour(part));
+                                    .or_insert(Star::OneNeighbour(part));
                             }
                         }
                     }
@@ -101,7 +99,7 @@ impl From<&str> for Schematic {
                                         stars
                                             .entry((line_index, neighbour_index))
                                             .and_modify(|star| star.add_neighbour(part))
-                                            .or_insert(Star::SingleNeighbour(part));
+                                            .or_insert(Star::OneNeighbour(part));
                                     }
                                 }
                             }
@@ -124,7 +122,7 @@ impl From<&str> for Schematic {
             gears: stars
                 .into_values()
                 .filter_map(|s| match s {
-                    Star::Gear(gear) => Some(gear),
+                    Star::TwoNeighbours(p1, p2) => Some(Gear(p1, p2)),
                     _ => None,
                 })
                 .collect(),

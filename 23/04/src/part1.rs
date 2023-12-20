@@ -5,15 +5,14 @@ struct ScratchCard {
 }
 
 impl ScratchCard {
-    pub fn new(lucky_numbers: Vec<u32>, game_numbers: Vec<u32>) -> ScratchCard {
-        ScratchCard {
-            lucky_numbers,
-            game_numbers,
-        }
-    }
-
     fn calculate_points(&self) -> u32 {
-        42
+        self.game_numbers
+            .iter()
+            .filter(|&number| self.lucky_numbers.contains(number))
+            .fold(0, |points, _| match points {
+                0 => 1,
+                _ => points * 2,
+            })
     }
 }
 
@@ -37,7 +36,10 @@ impl From<&str> for ScratchCard {
         let lucky_numbers = number_sequence(lucky_numbers_str);
         let game_numbers = number_sequence(game_numbers_str);
 
-        ScratchCard::new(lucky_numbers, game_numbers)
+        ScratchCard {
+            lucky_numbers,
+            game_numbers,
+        }
     }
 }
 
@@ -50,8 +52,6 @@ pub fn solve(input: &str) -> u32 {
         })
         .map(|(_, sc_input)| ScratchCard::from(sc_input))
         .collect();
-
-    dbg!(&scratchcards);
 
     scratchcards.iter().map(|sc| sc.calculate_points()).sum()
 }

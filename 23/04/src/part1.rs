@@ -4,12 +4,22 @@ struct ScratchCard {
     game_numbers: Vec<u32>,
 }
 
+impl ScratchCard {
+    pub fn new(lucky_numbers: Vec<u32>, game_numbers: Vec<u32>) -> ScratchCard {
+        ScratchCard {
+            lucky_numbers,
+            game_numbers,
+        }
+    }
+
+    fn calculate_points(&self) -> u32 {
+        42
+    }
+}
+
 impl From<&str> for ScratchCard {
     fn from(str: &str) -> Self {
-        ScratchCard {
-            lucky_numbers: vec![],
-            game_numbers: vec![],
-        }
+        ScratchCard::new(vec![], vec![])
     }
 }
 
@@ -23,7 +33,7 @@ pub fn solve(input: &str) -> u32 {
         .map(|(_, sc_input)| ScratchCard::from(sc_input))
         .collect();
 
-    dbg!(scratchcards);
+    dbg!(&scratchcards);
 
-    42
+    scratchcards.iter().map(|sc| sc.calculate_points()).sum()
 }

@@ -6,13 +6,19 @@ pub struct ScratchCard {
 
 impl ScratchCard {
     pub fn calculate_points(&self) -> u32 {
-        self.game_numbers
+        self.winning_numbers()
             .iter()
-            .filter(|&number| self.lucky_numbers.contains(number))
             .fold(0, |points, _| match points {
                 0 => 1,
                 _ => points * 2,
             })
+    }
+
+    pub fn winning_numbers(&self) -> Vec<&u32> {
+        self.game_numbers
+            .iter()
+            .filter(|&number| self.lucky_numbers.contains(number))
+            .collect()
     }
 }
 

@@ -32,9 +32,7 @@
 //
 // Take a seat in the large pile of colorful cards. How many points are they worth in total?
 
-use crate::part1::scratchcard::ScratchCard;
-
-mod scratchcard;
+use crate::scratchcard::ScratchCard;
 
 pub fn solve(input: &str) -> u32 {
     let scratchcards: Vec<ScratchCard> = input

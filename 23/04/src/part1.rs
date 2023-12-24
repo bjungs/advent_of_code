@@ -32,17 +32,8 @@
 //
 // Take a seat in the large pile of colorful cards. How many points are they worth in total?
 
-use crate::scratchcard::ScratchCard;
+use crate::scratchcard::ScratchCardCollection;
 
 pub fn solve(input: &str) -> u32 {
-    let scratchcards: Vec<ScratchCard> = input
-        .lines()
-        .map(|line| {
-            line.split_once(": ")
-                .expect("format should be \"Card {number}: {lucky_numbers} | {game_numbers}\"")
-        })
-        .map(|(_, sc_input)| ScratchCard::from(sc_input))
-        .collect();
-
-    scratchcards.iter().map(|sc| sc.calculate_points()).sum()
+    ScratchCardCollection::from(input).calculate_points()
 }

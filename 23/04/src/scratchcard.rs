@@ -28,8 +28,7 @@ impl ScratchCardCollection {
                     };
 
                     // for every winning number, add 1 more of the next SCs for every copy of this SC
-                    let winning_numbers_count = sc.winning_numbers().iter().count();
-                    for winning_number_idx in 0..winning_numbers_count {
+                    for winning_number_idx in 0..sc.winning_numbers().iter().count() {
                         let next_sc_idx = idx + winning_number_idx + 1;
                         match sc_count_vec.get_mut(next_sc_idx) {
                             Some((_, next_count)) => {

@@ -52,7 +52,8 @@ impl ScratchCardCollection {
 
 impl From<&str> for ScratchCardCollection {
     fn from(str: &str) -> Self {
-        let scratchcards = str.lines()
+        let scratchcards = str
+            .lines()
             .map(|line| {
                 line.split_once(": ")
                     .expect("format should be \"Card {number}: {lucky_numbers} | {game_numbers}\"")

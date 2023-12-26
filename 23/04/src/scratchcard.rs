@@ -8,7 +8,7 @@ pub struct ScratchCardCollection(Vec<ScratchCard>);
 
 impl ScratchCardCollection {
     pub fn calculate_points(&self) -> u32 {
-        self.0.iter().map(|sc| sc.calculate_points()).sum()
+        self.0.iter().map(ScratchCard::calculate_points).sum()
     }
 
     pub fn count_winning(&self) -> u32 {

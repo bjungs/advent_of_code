@@ -17,21 +17,19 @@ impl ScratchCardCollection {
             .enumerate()
             .fold(
                 // starts with one of each
-                self.0.iter().map(|sc| (sc, 1)).collect(),
-                |mut sc_amount_vec: Vec<_>, (idx, _)| {
-                    // add 1 more of {winning_number} next SCs for every copy of the current SC
-                    let (sc, amount) = sc_amount_vec[idx];
-                    for winning_number_idx in 0..sc.winning_numbers().iter().count() {
+                self.0.iter().map(|_| 1u32).collect(),
+                |mut count_vec: Vec<u32>, (idx, sc)| {
+                    // add 1 more of the next SCs for every copy of this SC
+                    let count = count_vec[idx];
+                    for (winning_number_idx, _) in sc.winning_numbers().iter().enumerate() {
                         let next_sc_idx = idx + winning_number_idx + 1;
-                        if let Some((_, next_count)) = sc_amount_vec.get_mut(next_sc_idx) {
-                            *next_count += amount;
-                        }
+                        let next_count = count_vec.get_mut(next_sc_idx).unwrap();
+                        *next_count += count;
                     }
-                    sc_amount_vec
+                    count_vec
                 },
             )
             .iter()
-            .map(|(_, count)| *count)
             .sum()
     }
 }

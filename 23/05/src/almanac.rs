@@ -101,6 +101,10 @@ impl Almanac {
             .min()
             .unwrap()
     }
+
+    pub fn closest_seeds(&self, seed_ranges: &Vec<Range<u64>>) -> u64 {
+        todo!()
+    }
 }
 
 impl From<&str> for Almanac {

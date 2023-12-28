@@ -1,9 +1,25 @@
 use crate::almanac::Almanac;
 
-pub fn solve(input: &str) -> u32 {
-    let almanac = Almanac::from(input);
+pub fn solve(input: &str) -> u64 {
+    let seeds: Vec<u64> = input
+        .lines()
+        .nth(0)
+        .expect("First line should contain the seed numbers")
+        .split_once(": ")
+        .expect("Malformed seed numbers line.")
+        .1
+        .split_whitespace()
+        .map(|value| value.parse().expect("Seed number should be a valid u64."))
+        .collect();
 
-    dbg!(&almanac);
+    let almanac = Almanac::from(
+        input
+            .lines()
+            .skip(2)
+            .collect::<Vec<&str>>()
+            .join("\n")
+            .as_str(),
+    );
 
-    42
+    almanac.closest_seed(&seeds)
 }

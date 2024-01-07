@@ -1,3 +1,4 @@
+use std::cmp::{max, min};
 use std::ops::Range;
 use std::str;
 
@@ -16,16 +17,37 @@ impl RangeMap {
         }
     }
 
-    pub fn get(&self, source_value: &u64) -> Option<u64> {
+    pub fn map(&self, value: &u64) -> Option<u64> {
         let RangeMap {
             source,
             destination,
         } = self;
 
-        match source.contains(source_value) {
-            true => Some(destination.start + source_value - source.start),
+        match source.contains(value) {
+            true => Some(destination.start + value - source.start),
             false => None,
         }
+    }
+
+    pub fn map_range(&self, range: &Range<u64>) -> Option<Range<u64>> {
+        match (self.map(&range.start), self.map(&(range.end - 1))) {
+            (Some(start), Some(end)) => Some(start..(end + 1)),
+            _ => None,
+        }
+    }
+
+    pub fn intersection(&self, range: &Range<u64>) -> Option<Range<u64>> {
+        let intersection = Range {
+            start: max(range.start, self.source.start),
+            end: min(range.end, self.source.end),
+        };
+
+        if intersection.start > intersection.end {
+            // invalid intersection
+            return None;
+        }
+
+        Some(intersection)
     }
 }
 
@@ -70,9 +92,8 @@ impl Almanac {
         Ok(())
     }
 
-    /// converts a seed value to a location value by following the maps in the correct order
-    pub fn seed_to_location(&self, seed_value: &u64) -> u64 {
-        let map_collections = [
+    pub fn pipeline(&self) -> [&Vec<RangeMap>; 7] {
+        [
             &self.seed_to_soil,
             &self.soil_to_fertilizer,
             &self.fertilizer_to_water,
@@ -80,12 +101,15 @@ impl Almanac {
             &self.light_to_temp,
             &self.temp_to_humidity,
             &self.humidity_to_location,
-        ];
+        ]
+    }
 
+    /// converts a seed value to a location value by following the maps in the correct order
+    pub fn seed_to_location(&self, seed_value: &u64) -> u64 {
         let mut mapped_value: u64 = seed_value.clone();
-        for collection in map_collections {
-            for range_map in collection {
-                if let Some(destination_value) = range_map.get(&mapped_value) {
+        for stage in self.pipeline() {
+            for range_map in stage {
+                if let Some(destination_value) = range_map.map(&mapped_value) {
                     mapped_value = destination_value;
                     break;
                 }
@@ -102,8 +126,100 @@ impl Almanac {
             .unwrap()
     }
 
-    pub fn closest_seeds(&self, seed_ranges: &Vec<Range<u64>>) -> u64 {
-        todo!()
+    pub fn closest_seed_range(&self, seed_ranges: &Vec<Range<u64>>) -> u64 {
+        let mut mapped = vec![];
+        let mut unmapped = seed_ranges.clone();
+
+        for stage in self.pipeline() {
+            // at the beginning of a stage, consider all previously mapped values as unmapped
+            unmapped.append(&mut mapped);
+            let mut remainder = vec![];
+            for map in stage {
+                while let Some(range) = unmapped.pop() {
+                    match map.intersection(&range) {
+                        Some(intersection) => {
+                            // if there is an intersection, then by definition it can be mapped.
+                            let mapped_intersection = map.map_range(&intersection).unwrap();
+                            mapped.push(mapped_intersection);
+
+                            if range.start < intersection.start {
+                                println!("Some range before");
+                                dbg!(range.start..intersection.start);
+                                // part of the range cannot be processed, pass it along to the next stage
+                                remainder.push(range.start..intersection.start)
+                            }
+
+                            if range.end > intersection.end {
+                                println!("Some range after");
+                                dbg!(intersection.end..range.end);
+                                // part of the range cannot be processed, pass it along to the next stage
+                                remainder.push(intersection.end..range.end)
+                            }
+                        }
+                        None => {
+                            // this map cannot process the range, pass it along to the next map
+                            remainder.push(range);
+                        }
+                    }
+                }
+                // at the end of a map, put the remainder back into the unmapped collection so the next RangeMap can try to map it
+                unmapped.append(&mut remainder);
+            }
+
+            // at the end of a stage, consider every range mapped
+            mapped.append(&mut unmapped);
+        }
+
+        dbg!(&mapped);
+
+        mapped.iter().map(|range| range.start).min().unwrap()
+
+        // let _res = self.pipeline().iter().fold(vec![], |mut mapped, &stage| {
+        //     dbg!(&mapped);
+        //
+        //     // fold every stage into a tuple of mapped and unmapped values
+        //     let (mut stage_mapped, mut stage_unmapped) = stage.iter().fold(
+        //         (vec![], vec![seed_range.clone()]),
+        //         |(mut stage_mapped, mut stage_unmapped), map| {
+        //             let mut remainder = vec![];
+        //             // process the unmapped values from the previous stage
+        //             while let Some(range) = stage_unmapped.pop() {
+        //                 dbg!(&range);
+        //                 match map.intersection(&range) {
+        //                     Some(intersection) => {
+        //                         dbg!(&map);
+        //                         let mapped_intersection = map.map_range(&intersection).unwrap();
+        //                         dbg!((&intersection, &mapped_intersection));
+        //                         stage_mapped.push(mapped_intersection);
+        //
+        //                         if range.start < intersection.start {
+        //                             // part of the range cannot be processed, pass it along to the next stage
+        //                             dbg!(range.start..intersection.start);
+        //                             remainder.push(range.start..intersection.start)
+        //                         }
+        //
+        //                         if range.end > intersection.end {
+        //                             // part of the range cannot be processed, pass it along to the next stage
+        //                             dbg!(intersection.end..range.end);
+        //                             remainder.push(intersection.end..range.end)
+        //                         }
+        //                     }
+        //                     None => {
+        //                         // this map cannot process the range, pass it along to the next stage
+        //                         remainder.push(range);
+        //                     }
+        //                 }
+        //             }
+        //             (stage_mapped, remainder)
+        //         },
+        //     );
+        //
+        //     stage_mapped.append(&mut stage_unmapped);
+        //
+        //     mapped.append(&mut stage_mapped);
+
+        // mapped
+        // });
     }
 }
 

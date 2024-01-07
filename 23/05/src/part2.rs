@@ -9,8 +9,12 @@ fn get_seed_ranges(seeds_values: Vec<u64>) -> Vec<Range<u64>> {
     for seed_value in seeds_values {
         if range_start.is_some() {
             if range_length.is_some() {
-                let start = range_start.take().expect("We just checked that this value is Some.");
-                let length = range_length.take().expect("We just checked that this value is Some.");
+                let start = range_start
+                    .take()
+                    .expect("We just checked that this value is Some.");
+                let length = range_length
+                    .take()
+                    .expect("We just checked that this value is Some.");
                 ranges.push(start..start + length)
             } else {
                 range_length = Some(seed_value);
@@ -37,8 +41,6 @@ pub fn solve(input: &str) -> u64 {
             .collect(),
     );
 
-    dbg!(&seed_ranges);
-
     let almanac = Almanac::from(
         input
             .lines()
@@ -48,5 +50,5 @@ pub fn solve(input: &str) -> u64 {
             .as_str(),
     );
 
-    almanac.closest_seeds(&seed_ranges)
+    almanac.closest_seed_range(&seed_ranges)
 }

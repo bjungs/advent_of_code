@@ -4,6 +4,7 @@ mod part2;
 
 fn main() {
     let input = include_str!("../input/input.txt");
+    // let input = include_str!("../input/test_input.txt");
 
     println!("Day 05");
     println!("Part 1: {}", part1::solve(input));

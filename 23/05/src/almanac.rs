@@ -1,35 +1,26 @@
 use std::ops::Range;
 use std::str;
 
+mod map_stage;
 mod range_map;
-use range_map::RangeMap;
 
-#[derive(Debug)]
+use crate::almanac::map_stage::MappingStage;
+use crate::almanac::range_map::RangeMap;
+
+#[derive(Debug, Default)]
 pub struct Almanac {
-    seed_to_soil: Vec<RangeMap>,
-    soil_to_fertilizer: Vec<RangeMap>,
-    fertilizer_to_water: Vec<RangeMap>,
-    water_to_light: Vec<RangeMap>,
-    light_to_temp: Vec<RangeMap>,
-    temp_to_humidity: Vec<RangeMap>,
-    humidity_to_location: Vec<RangeMap>,
+    seed_to_soil: MappingStage,
+    soil_to_fertilizer: MappingStage,
+    fertilizer_to_water: MappingStage,
+    water_to_light: MappingStage,
+    light_to_temp: MappingStage,
+    temp_to_humidity: MappingStage,
+    humidity_to_location: MappingStage,
 }
 
 impl Almanac {
-    pub fn new() -> Self {
-        Self {
-            seed_to_soil: vec![],
-            soil_to_fertilizer: vec![],
-            fertilizer_to_water: vec![],
-            water_to_light: vec![],
-            light_to_temp: vec![],
-            temp_to_humidity: vec![],
-            humidity_to_location: vec![],
-        }
-    }
-
-    fn try_push(&mut self, map_name: &str, range_map: RangeMap) -> Result<(), String> {
-        let map = match map_name {
+    fn get_stage_mut(&mut self, name: &str) -> Result<&mut MappingStage, String> {
+        let stage= match name {
             "seed-to-soil" => &mut self.seed_to_soil,
             "soil-to-fertilizer" => &mut self.soil_to_fertilizer,
             "fertilizer-to-water" => &mut self.fertilizer_to_water,
@@ -38,14 +29,19 @@ impl Almanac {
             "temperature-to-humidity" => &mut self.temp_to_humidity,
             "humidity-to-location" => &mut self.humidity_to_location,
             _ => {
-                return Err(format!("Unknown map {}", map_name));
+                return Err(format!("Unknown stage {}", name));
             }
         };
-        map.push(range_map);
+
+        Ok(stage)
+    }
+
+    fn add_map(&mut self, stage_name: &str, map: RangeMap) -> Result<(), String> {
+        self.get_stage_mut(stage_name)?.add_map(map);
         Ok(())
     }
 
-    pub fn pipeline(&self) -> [&Vec<RangeMap>; 7] {
+    pub fn pipeline(&self) -> std::array::IntoIter<&MappingStage, 7> {
         [
             &self.seed_to_soil,
             &self.soil_to_fertilizer,
@@ -54,7 +50,7 @@ impl Almanac {
             &self.light_to_temp,
             &self.temp_to_humidity,
             &self.humidity_to_location,
-        ]
+        ].into_iter()
     }
 
     /// converts a seed value to a location value by following the maps in the correct order
@@ -127,16 +123,16 @@ impl Almanac {
 
 impl From<&str> for Almanac {
     fn from(input: &str) -> Self {
-        let mut almanac = Almanac::new();
-        let mut current_map_name: Option<&str> = None;
+        let mut almanac = Almanac::default();
+        let mut stage_name: Option<&str> = None;
 
         for line in input.lines().filter(|line| !line.is_empty()) {
             if let Some((map_name, _)) = line.split_once(" map:") {
-                current_map_name = Some(map_name);
+                stage_name = Some(map_name);
                 continue;
             }
 
-            let map_name = current_map_name.expect("Map name is required");
+            let stage_name = stage_name.expect("Map name is required");
             let numbers: Vec<u64> = line
                 .split_whitespace()
                 .take(3)
@@ -150,7 +146,7 @@ impl From<&str> for Almanac {
             );
 
             almanac
-                .try_push(map_name, RangeMap::new(numbers[0], numbers[1], numbers[2]))
+                .add_map(stage_name, RangeMap::new(numbers[0], numbers[1], numbers[2]))
                 .unwrap();
         }
 

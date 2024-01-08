@@ -105,8 +105,8 @@ impl Almanac {
     }
 
     /// converts a seed value to a location value by following the maps in the correct order
-    pub fn seed_to_location(&self, seed_value: &u64) -> u64 {
-        let mut mapped_value: u64 = seed_value.clone();
+    pub fn seed_to_location(&self, seed_value: u64) -> u64 {
+        let mut mapped_value: u64 = seed_value;
         for stage in self.pipeline() {
             for range_map in stage {
                 if let Some(destination_value) = range_map.map(&mapped_value) {
@@ -118,41 +118,37 @@ impl Almanac {
         mapped_value
     }
 
-    pub fn closest_seed(&self, seeds: &Vec<u64>) -> u64 {
+    pub fn closest_seed(&self, seeds: &[u64]) -> u64 {
         seeds
             .iter()
-            .map(|seed| self.seed_to_location(seed))
+            .map(|&seed| self.seed_to_location(seed))
             .min()
             .unwrap()
     }
 
-    pub fn closest_seed_range(&self, seed_ranges: &Vec<Range<u64>>) -> u64 {
+    pub fn closest_seed_range(&self, seed_ranges: &[Range<u64>]) -> u64 {
         let mut mapped = vec![];
-        let mut unmapped = seed_ranges.clone();
+        let mut unmapped = seed_ranges.to_vec();
 
         for stage in self.pipeline() {
             // at the beginning of a stage, consider all previously mapped values as unmapped
             unmapped.append(&mut mapped);
             let mut remainder = vec![];
             for map in stage {
+                // try to process a range using the current RangeMap
                 while let Some(range) = unmapped.pop() {
                     match map.intersection(&range) {
                         Some(intersection) => {
-                            // if there is an intersection, then by definition it can be mapped.
+                            // if there is an intersection, then by definition it can be mapped
                             let mapped_intersection = map.map_range(&intersection).unwrap();
                             mapped.push(mapped_intersection);
 
+                            // push back any left over ranges for the next map(s) to process
                             if range.start < intersection.start {
-                                println!("Some range before");
-                                dbg!(range.start..intersection.start);
-                                // part of the range cannot be processed, pass it along to the next stage
                                 remainder.push(range.start..intersection.start)
                             }
 
                             if range.end > intersection.end {
-                                println!("Some range after");
-                                dbg!(intersection.end..range.end);
-                                // part of the range cannot be processed, pass it along to the next stage
                                 remainder.push(intersection.end..range.end)
                             }
                         }
@@ -162,64 +158,17 @@ impl Almanac {
                         }
                     }
                 }
-                // at the end of a map, put the remainder back into the unmapped collection so the next RangeMap can try to map it
+                // at the end of a map, put the remainder back into the unmapped collection
+                // so that the next RangeMap can try to map it
                 unmapped.append(&mut remainder);
             }
 
-            // at the end of a stage, consider every range mapped
+            // at the end of a stage, consider every range as mapped
             mapped.append(&mut unmapped);
         }
 
-        dbg!(&mapped);
-
+        // at the end of the pipeline get the smallest start value
         mapped.iter().map(|range| range.start).min().unwrap()
-
-        // let _res = self.pipeline().iter().fold(vec![], |mut mapped, &stage| {
-        //     dbg!(&mapped);
-        //
-        //     // fold every stage into a tuple of mapped and unmapped values
-        //     let (mut stage_mapped, mut stage_unmapped) = stage.iter().fold(
-        //         (vec![], vec![seed_range.clone()]),
-        //         |(mut stage_mapped, mut stage_unmapped), map| {
-        //             let mut remainder = vec![];
-        //             // process the unmapped values from the previous stage
-        //             while let Some(range) = stage_unmapped.pop() {
-        //                 dbg!(&range);
-        //                 match map.intersection(&range) {
-        //                     Some(intersection) => {
-        //                         dbg!(&map);
-        //                         let mapped_intersection = map.map_range(&intersection).unwrap();
-        //                         dbg!((&intersection, &mapped_intersection));
-        //                         stage_mapped.push(mapped_intersection);
-        //
-        //                         if range.start < intersection.start {
-        //                             // part of the range cannot be processed, pass it along to the next stage
-        //                             dbg!(range.start..intersection.start);
-        //                             remainder.push(range.start..intersection.start)
-        //                         }
-        //
-        //                         if range.end > intersection.end {
-        //                             // part of the range cannot be processed, pass it along to the next stage
-        //                             dbg!(intersection.end..range.end);
-        //                             remainder.push(intersection.end..range.end)
-        //                         }
-        //                     }
-        //                     None => {
-        //                         // this map cannot process the range, pass it along to the next stage
-        //                         remainder.push(range);
-        //                     }
-        //                 }
-        //             }
-        //             (stage_mapped, remainder)
-        //         },
-        //     );
-        //
-        //     stage_mapped.append(&mut stage_unmapped);
-        //
-        //     mapped.append(&mut stage_mapped);
-
-        // mapped
-        // });
     }
 }
 
@@ -228,7 +177,7 @@ impl From<&str> for Almanac {
         let mut almanac = Almanac::new();
         let mut current_map_name: Option<&str> = None;
 
-        for line in input.lines().filter(|line| line.len() > 0) {
+        for line in input.lines().filter(|line| !line.is_empty()) {
             if let Some((map_name, _)) = line.split_once(" map:") {
                 current_map_name = Some(map_name);
                 continue;
@@ -242,7 +191,7 @@ impl From<&str> for Almanac {
                     .collect::<Vec<_>>();
 
                 almanac
-                    .try_push(&map_name, RangeMap::new(numbers[0], numbers[1], numbers[2]))
+                    .try_push(map_name, RangeMap::new(numbers[0], numbers[1], numbers[2]))
                     .unwrap();
             }
         }

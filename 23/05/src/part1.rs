@@ -3,7 +3,7 @@ use crate::almanac::Almanac;
 pub fn solve(input: &str) -> u64 {
     let seeds: Vec<u64> = input
         .lines()
-        .nth(0)
+        .next()
         .expect("First line should contain the seed numbers")
         .split_once(": ")
         .expect("Malformed seed numbers line.")

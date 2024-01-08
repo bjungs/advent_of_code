@@ -31,7 +31,7 @@ pub fn solve(input: &str) -> u64 {
     let seed_ranges: Vec<Range<u64>> = get_seed_ranges(
         input
             .lines()
-            .nth(0)
+            .next()
             .expect("First line should contain the seed ranges.")
             .split_once(": ")
             .expect("Malformed seed numbers line.")
